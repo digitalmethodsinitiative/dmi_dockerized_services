@@ -12,7 +12,7 @@ Run container as daemon from image
 `sudo docker run -v $(pwd)/data/:/app/data/ --name whisper --gpus all -d whisper`
 -  `-v $(pwd)/data/:/app/data/` mounts the `data` directory in your current working directory to the container
 - `--name whisper` names the container "whisper"
-- `--gpus all` is needed for the container to use the host GPUs
+- `--gpus all` is needed for the container to use the host GPUs; remove and Whisper will run without GPUs albeit MUCH more slowly
 - `-d` runs the container and disconnects
 
 Connect to container to run `whisper` commands
