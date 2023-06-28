@@ -2,8 +2,11 @@ import argparse
 import importlib
 import os
 import torch
+import torchvision
 import clip
 from PIL import Image
+from pathlib import Path
+import json
 
 device = "cuda" if torch.cuda.is_available() else "cpu"
 
@@ -13,11 +16,12 @@ def parse_args():
     Parse command line arguments
     """
     cli = argparse.ArgumentParser()
-    cli.add_argument("--get_models", "-a", default=False, help="Get available models.", action="store_true")
+    cli.add_argument("--available_models", "-a", default=False, help="Get available models.", action="store_true")
     cli.add_argument("--dataset", "-d", default="", help="Use existing torchvision.dataset for image categories.")
     cli.add_argument("--model", "-m", default="", help="CLIP model.")
-    cli.add_argument("--image", "-i", default="", help="Image to classify.")
+    cli.add_argument("--output_dir", "-o", default="", help="Directory to store JSON results.")
     cli.add_argument("--categories", "-c", default="", help="Categories to classify image (comma seperated list).")
+    cli.add_argument("--images", "-i", nargs="+", type=str, help="Image(s) to classify.")
 
     return cli.parse_args()
 
@@ -74,7 +78,7 @@ def predict_image_category_probabilities(model, preprocess, image_path, text_lis
     return probs
 
 
-def top_labels(model, preprocess, image_path, classes):
+def top_labels(model, preprocess, classes, image_path):
     image_input = preprocess(Image.open(image_path)).unsqueeze(0).to(device)
     text_inputs = torch.cat([clip.tokenize(f"a photo of a {c}") for c in classes]).to(device)
 
@@ -91,9 +95,9 @@ def top_labels(model, preprocess, image_path, classes):
 
     # Print the result
     predictions = []
-    print("\nTop predictions:")
+    print(f"\nTop predictions for {Path(image_path).name}:")
     for value, index in zip(values, indices):
-        predictions.append((f"{classes[index]:>16s}", f"{100 * value.item():.2f}%"))
+        predictions.append((classes[index], value.item()))
 
         if len(predictions) < 6:
             print(f"{classes[index]:>16s}: {100 * value.item():.2f}%")
@@ -103,7 +107,7 @@ def top_labels(model, preprocess, image_path, classes):
 
 if __name__ == "__main__":
     args = parse_args()
-    if args.get_models:
+    if args.available_models:
         print(get_available_models())
         exit(0)
 
@@ -122,11 +126,12 @@ if __name__ == "__main__":
         print("Must specify either --dataset or --categories.")
         exit(1)
 
-    if not args.image:
-        print("Must specify --image.")
-        exit(1)
     if not args.model:
         print("Must specify --model.")
+        exit(1)
+
+    if not args.images:
+        print("Must specify at least one image.")
         exit(1)
 
     try:
@@ -135,6 +140,13 @@ if __name__ == "__main__":
         print(e)
         exit(1)
 
-    prediction = top_labels(model, preprocess, args.image, classes)
+    output_dir = Path(args.output_dir) if args.output_dir else None
+
+    for image in args.images:
+        prediction = top_labels(model, preprocess, classes, image)
+        if output_dir:
+            with open(output_dir.joinpath(Path(image).with_suffix(".json").name), "w") as out_file:
+                out_file.write(json.dumps(prediction))
+
 
 
