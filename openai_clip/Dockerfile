@@ -14,8 +14,7 @@ RUN python3 -m pip install -U ftfy regex tqdm && \
     python3 -m pip install -U git+https://github.com/openai/CLIP.git
 
 # Copy project
-COPY docker-entrypoint.sh /app/
-COPY download_models.py /app/
+COPY . /app/
 RUN mkdir /app/data/
 
 RUN chmod +x docker-entrypoint.sh download_models.py
