@@ -29,5 +29,5 @@ Connect to container to run `container_name` commands
 This docker run command combines the above to create a one time use Docker container to run commands
 
 Assuming you have a folder `data` in your current working directory with audio files in it, run:
-`docker run --rm -v $(pwd)/data/:/app/data/ --gpus all -it container_name command_of_choice`
+`docker run --rm -v $(pwd)/data/:/app/data/ --gpus all container_name command_of_choice`
 - `--rm` removes the container after it has completed
