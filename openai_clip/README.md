@@ -33,5 +33,5 @@ will output .json files with transcripts into your local `data` directory for ea
 This docker run command combines the above to create a one time use Docker container to run this `whisper` command
 
 Assuming you have a folder `data` in your current working directory with audio files in it, run:
-`docker run --rm -v $(pwd)/data/:/app/data/ --gpus all clip bash -c "python3 clip_interface.py --model ViT-B/16 --output_dir data/output/ --categories cats,dogs,other --images data/*"`
-The results will be in your local `data` directory as .json files.
+`docker run --rm -v $(pwd)/data/:/app/data/ --gpus all clip bash -c "python3 clip_interface.py --model ViT-B/16 --output_dir data/output/ --categories 'cats,dogs,other,star wars' --images data/*"`
+The results will be in your local `data/output` directory as .json files.
