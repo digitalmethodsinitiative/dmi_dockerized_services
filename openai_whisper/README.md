@@ -21,6 +21,7 @@ Connect to container to run `whisper` commands
 
 Once connected...
 
+
 `whisper --output_dir data/ --output_format json --model medium data/*`
 
 will output .json files with transcripts into your local `data` directory for each audio file in the same `data` directory.
@@ -28,4 +29,6 @@ will output .json files with transcripts into your local `data` directory for ea
 ### Run the container for a single use
 This docker run command combines the above to create a one time use Docker container to run this `whisper` command
 
-`sudo docker run -v $(pwd)/data/:/app/data/ --gpus all -it whisper whisper --output_dir data/ --output_format json --model tiny data/*`
+Assuming you have a folder `data` in your current working directory with audio files in it, run:
+`sudo docker run --rm -v $(pwd)/data/:/app/data/ --gpus all -it whisper whisper --output_dir data/ --output_format json --model tiny data/*`
+The results will be in your local `data` directory as .json files.
