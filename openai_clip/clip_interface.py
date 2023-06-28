@@ -1,0 +1,140 @@
+import argparse
+import importlib
+import os
+import torch
+import clip
+from PIL import Image
+
+device = "cuda" if torch.cuda.is_available() else "cpu"
+
+
+def parse_args():
+    """
+    Parse command line arguments
+    """
+    cli = argparse.ArgumentParser()
+    cli.add_argument("--get_models", "-a", default=False, help="Get available models.", action="store_true")
+    cli.add_argument("--dataset", "-d", default="", help="Use existing torchvision.dataset for image categories.")
+    cli.add_argument("--model", "-m", default="", help="CLIP model.")
+    cli.add_argument("--image", "-i", default="", help="Image to classify.")
+    cli.add_argument("--categories", "-c", default="", help="Categories to classify image (comma seperated list).")
+
+    return cli.parse_args()
+
+
+def collect_image_categories(dataset_name):
+    if dataset_name not in torchvision.datasets.__all__:
+        raise ValueError(f"Invalid dataset type: {dataset_name}")
+
+    torch_dataset = getattr(importlib.import_module("torchvision.datasets"), dataset_name)
+    try:
+        dataset = torch_dataset(root=os.path.expanduser("~/.cache"), download=True)
+    except TypeError as e:
+        print(e)
+        raise ValueError(f"Unable to load dataset type: {dataset_name}")
+
+    return dataset.classes
+
+
+def get_available_models():
+    return clip.available_models()
+
+
+def load_model(model_name):
+    if model_name not in get_available_models():
+        raise ValueError(f"Invalid model name: {model_name}. Available models: {get_available_models()}")
+
+    model, preprocess = clip.load(model_name, device=device)
+    return model, preprocess
+
+
+def predict_image_category_probabilities(model, preprocess, image_path, text_list):
+    """
+    Possibly helpful, but the `top_labels` function is probably more useful.
+    :param model:
+    :param preprocess:
+    :param image_path:
+    :param text_list:
+    :return:
+    """
+    image = preprocess(Image.open(image_path)).unsqueeze(0).to(device)
+    text = clip.tokenize(text_list).to(device)
+
+    with torch.no_grad():
+        image_features = model.encode_image(image)
+        text_features = model.encode_text(text)
+        logits_per_image, logits_per_text = model(image, text)
+        probs = logits_per_image.softmax(dim=-1).cpu().numpy()
+    probs = sorted([(i, j) for i, j in zip(text_list, probs[0])], key=lambda x: x[1], reverse=True)
+
+    print("Label probs:")
+    for prob in probs[:5]:
+        print(f"{prob[0]}: {100 * prob[1]:.2f}%")
+
+    return probs
+
+
+def top_labels(model, preprocess, image_path, classes):
+    image_input = preprocess(Image.open(image_path)).unsqueeze(0).to(device)
+    text_inputs = torch.cat([clip.tokenize(f"a photo of a {c}") for c in classes]).to(device)
+
+    # Calculate features
+    with torch.no_grad():
+        image_features = model.encode_image(image_input)
+        text_features = model.encode_text(text_inputs)
+
+    # Pick the top 5 most similar labels for the image
+    image_features /= image_features.norm(dim=-1, keepdim=True)
+    text_features /= text_features.norm(dim=-1, keepdim=True)
+    similarity = (100.0 * image_features @ text_features.T).softmax(dim=-1)
+    values, indices = similarity[0].topk(len(classes))
+
+    # Print the result
+    predictions = []
+    print("\nTop predictions:")
+    for value, index in zip(values, indices):
+        predictions.append((f"{classes[index]:>16s}", f"{100 * value.item():.2f}%"))
+
+        if len(predictions) < 6:
+            print(f"{classes[index]:>16s}: {100 * value.item():.2f}%")
+
+    return predictions
+
+
+if __name__ == "__main__":
+    args = parse_args()
+    if args.get_models:
+        print(get_available_models())
+        exit(0)
+
+    if args.dataset:
+        try:
+            classes = collect_image_categories(args.dataset)
+        except ValueError as e:
+            print(e)
+            exit(1)
+        if args.categories:
+            print("Cannot specify both --dataset and --categories.")
+            exit(1)
+    elif args.categories:
+        classes = args.categories.split(",")
+    else:
+        print("Must specify either --dataset or --categories.")
+        exit(1)
+
+    if not args.image:
+        print("Must specify --image.")
+        exit(1)
+    if not args.model:
+        print("Must specify --model.")
+        exit(1)
+
+    try:
+        model, preprocess = load_model(args.model)
+    except ValueError as e:
+        print(e)
+        exit(1)
+
+    prediction = top_labels(model, preprocess, args.image, classes)
+
+
