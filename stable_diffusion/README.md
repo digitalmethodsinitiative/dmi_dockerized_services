@@ -10,10 +10,19 @@ list of prompts.
 
 ### Build the Docker image
 1. Navigate to this folder
-2. `docker build -t stable_diffusion .`
+2. Install the models:
+   - `git clone --depth 1 https://huggingface.co/stabilityai/stable-diffusion-xl-base-1.0`
+   - `git clone --depth 1 https://huggingface.co/stabilityai/stable-diffusion-xl-refiner-1.0`
+   These are pre-loaded this way because `git clone` is not cached by Docker builds, so any subsequent builds would need
+   to download the full models and weights again, which takes super long. Once you are happy with the image (probably 
+   immediately after building) you can delete these repositories from the folder. You may need to install `git-lfs` (for
+   example via `apt install` first).
+3. Build the image: `docker build -t stable_diffusion .`
+4. `rm -rf stable-diffusion-xl-*` if you're not going to rebuild the images and want to free up some disk space. 
 
 The build process pre-loads the models from Hugging Face, these are huge (20+ gigabytes) so building will take quite a 
-while.
+while. The resulting image will be enormous (~200 GB) because the uncompressed models and weights are. Welcome to the
+age of foundation models!
 
 ### Run the container persistently 
 Run container as daemon from image

@@ -1,6 +1,7 @@
 import argparse
 import json
 import torch
+import sys
 import re
 
 from diffusers import DiffusionPipeline
@@ -77,9 +78,12 @@ if __name__ == "__main__":
     else:
         prompts = {1: {"prompt": args.prompt, "negative": args.negative_prompt}}
 
-    for prompt_id, prompt in prompts:
+    for prompt_id, prompt in prompts.items():
         if not prompt["prompt"]:
             continue
+
+        print(repr(prompt), file=sys.stderr)
+
         # run both experts
         image = base(
             prompt=prompt["prompt"],
