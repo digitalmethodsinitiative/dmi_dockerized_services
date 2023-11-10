@@ -14,11 +14,11 @@ def parse_args():
     Parse command line arguments
     """
     cli = argparse.ArgumentParser()
-    cli.add_argument("--prompt-file", "-f", help="Path to prompt file, one prompt per line", required=True)
-    cli.add_argument("--prompt", "-p", help="Text prompt", required=True)
+    cli.add_argument("--prompts-file", "-f", help="Path to prompt file, one prompt per line")
+    cli.add_argument("--prompt", "-p", help="Text prompt")
     cli.add_argument("--negative-prompt", "-n", help="Negative prompt", default="")
     cli.add_argument("--steps", "-s", help="Number of steps (default 40)", default=40, type=int)
-    cli.add_argument("--output-dir", "-o", help="Output directory where image will be saved", required=True)
+    cli.add_argument("--output-dir", "-o", help="Output directory where image will be saved", default="data", required=True)
 
     return cli.parse_args()
 
@@ -71,13 +71,15 @@ if __name__ == "__main__":
     n_steps = args.steps
     high_noise_frac = 0.8
 
-    if args.prompt_file:
-        with open(args.prompt_file) as infile:
+    if args.prompts_file:
+        with open(args.prompts_file) as infile:
             prompts = json.load(infile)
     else:
         prompts = {1: {"prompt": args.prompt, "negative": args.negative_prompt}}
 
     for prompt_id, prompt in prompts:
+        if not prompt["prompt"]:
+            continue
         # run both experts
         image = base(
             prompt=prompt["prompt"],
