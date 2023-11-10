@@ -1,0 +1,99 @@
+import argparse
+import json
+import torch
+import re
+
+from diffusers import DiffusionPipeline
+from pathlib import Path
+
+have_cuda = torch.cuda.is_available()
+
+
+def parse_args():
+    """
+    Parse command line arguments
+    """
+    cli = argparse.ArgumentParser()
+    cli.add_argument("--prompt-file", "-f", help="Path to prompt file, one prompt per line", required=True)
+    cli.add_argument("--prompt", "-p", help="Text prompt", required=True)
+    cli.add_argument("--negative-prompt", "-n", help="Negative prompt", default="")
+    cli.add_argument("--steps", "-s", help="Number of steps (default 40)", default=40, type=int)
+    cli.add_argument("--output-dir", "-o", help="Output directory where image will be saved", required=True)
+
+    return cli.parse_args()
+
+
+def make_filename(prompt_id, prompt):
+    """
+    Generate filename for generated image
+
+    Should mirror the make_filename method in generate_images.py in 4CAT.
+
+    :param prompt_id:  Unique identifier, eg `54`
+    :param str prompt:  Text prompt, will be sanitised, e.g. `Rasta Bill Gates`
+    :return str:  For example, `54-rasta-bill-gates.jpeg`
+    """
+    safe_prompt = re.sub(r"[^a-zA-Z0-9 _-]", "", prompt).replace(" ", "-").lower()[:90]
+    return f"{prompt_id}-{safe_prompt}.jpeg"
+
+
+if __name__ == "__main__":
+    args = parse_args()
+
+    # load both base & refiner
+    base = DiffusionPipeline.from_pretrained(
+        "stable-diffusion-xl-base-1.0",
+        torch_dtype=torch.float16,
+        variant="fp16",
+        use_safetensors=True
+    )
+
+    if have_cuda:
+        base.to("cuda")
+    else:
+        base.enable_model_cpu_offload()
+
+    refiner = DiffusionPipeline.from_pretrained(
+        "stable-diffusion-xl-refiner-1.0",
+        text_encoder_2=base.text_encoder_2,
+        vae=base.vae,
+        torch_dtype=torch.float16,
+        use_safetensors=True,
+        variant="fp16",
+    )
+
+    if have_cuda:
+        refiner.to("cuda")
+    else:
+        refiner.enable_model_cpu_offload()
+
+    # Define how many steps and what % of steps to be run on each experts (80/20) here
+    n_steps = args.steps
+    high_noise_frac = 0.8
+
+    if args.prompt_file:
+        with open(args.prompt_file) as infile:
+            prompts = json.load(infile)
+    else:
+        prompts = {1: {"prompt": args.prompt, "negative": args.negative_prompt}}
+
+    for prompt_id, prompt in prompts:
+        # run both experts
+        image = base(
+            prompt=prompt["prompt"],
+            negative_prompt=prompt["negative"],
+            num_inference_steps=n_steps,
+            denoising_end=high_noise_frac,
+            output_type="latent",
+        ).images
+
+        image = refiner(
+            prompt=prompt["prompt"],
+            negative_prompt=prompt["negative"],
+            num_inference_steps=n_steps,
+            denoising_start=high_noise_frac,
+            image=image,
+        ).images[0]
+
+        filename = make_filename(prompt_id, prompt["prompt"])
+        image.save(Path(args.output_dir).joinpath(filename))
