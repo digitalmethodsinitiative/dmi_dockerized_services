@@ -20,7 +20,7 @@ Run container as daemon from image
 
 `docker run -v $(pwd)/data/:/app/data/ --name stable_diffusion --gpus all -d stable_diffusion`
 -  `-v $(pwd)/data/:/app/data/` mounts the `data` directory in your current working directory to the container
-- `--name stable_diffusion` names the container "clip"
+- `--name stable_diffusion` names the container "stable_diffusion"
 - `--gpus all` is needed for the container to use the host GPUs; remove and it will run without GPUs albeit MUCH more 
   slowly (unusably, basically)
 - `-d` runs the container and disconnects
@@ -30,7 +30,7 @@ This Docker run command combines the above to create a one time use Docker conta
 script discussed below.
 
 Assuming you have a folder `data` in your current working directory with audio files in it, run:
-`docker run --rm -v $(pwd)/data/:/app/data/ --gpus all clip bash -c "python3 interface.py --prompt 'rasta bill gates'"`
+`docker run --rm -v $(pwd)/data/:/app/data/ --gpus all stable_diffusion bash -c "python3 interface.py --prompt 'rasta bill gates'"`
 
 ### Command line tool
 We developed a simple command line tool to do things with the model:c
