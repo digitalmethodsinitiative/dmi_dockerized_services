@@ -1,0 +1,17 @@
+text2text:
+  - google/flan-t5-large
+  - google/flan-t5-xxl
+  - meta-llama/llama-2-7b-chat-hf
+textgen:
+  - tiiuae/falcon-7b-instruct
+  - mosaicml/mpt-7b-instruct
+  - databricks/dolly-v2-12b
+  - databricks/dolly-v2-3b
+openai:
+  - openai/gpt-3.5-turbo
+  - openai/gpt-3.5-turbo-16k
+  - openai/text-davinci-003
+  - openai/text-davinci-002
+  - openai/text-curie-001
+  - openai/text-babbage-001
+  - openai/text-ada-001
