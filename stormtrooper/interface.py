@@ -62,17 +62,18 @@ if __name__ == "__main__":
 
     if model_type in ("text2text", "textgen"):
         have_examples = any(labels.values())
+        model_name = args.model.split("/").pop()
         if have_examples:
             # fit() expects a list of examples as the first arg, and a list of
             # corresponding labels as the second arg
             examples = itertools.chain(*[v for v in labels.values()])
-            chained_labels = itertools.chain(*[l * len(v) for l, v in labels.items()])
+            chained_labels = itertools.chain(*[[l] * len(labels[l]) for l in labels.keys()])
             predictor = {"text2text": Text2TextFewShotClassifier, "textgen": GenerativeFewShotClassifier}[model_type](
-                model_name=args.model, device=gpu_or_cpu, progress_bar=False)
+                model_name=model_name, device=gpu_or_cpu, progress_bar=False)
             predictor.fit(examples, chained_labels)
         else:
             predictor = {"text2text": Text2TextZeroShotClassifier, "textgen": GenerativeZeroShotClassifier}[model_type](
-                model_name=args.model, device=gpu_or_cpu, progress_bar=False)
+                model_name=model_name, device=gpu_or_cpu, progress_bar=False)
             predictor.fit(None, labels.keys())
 
         # we *could* just load all data into a list and pass it to the predictor in
@@ -95,32 +96,39 @@ if __name__ == "__main__":
             while looping:
                 if len(batch) >= batch_size or input_exhausted:
                     predicted_labels = predictor.predict(batch.values())
-                    for item_id in batch.keys():
-                        with outputpath.open("a") as outfile:
-                            written_bytes = outputpath.stat().st_size
-                            if written_bytes == 0:
-                                outfile.write("{\n")
-                                outfile.flush()
-                            elif written_bytes > 2:
-                                outfile.write(",\n")
-                            outfile.write(f"  {json.dumps(item_id)}: {json.dumps(predicted_labels.pop(0))}")
+
+                    if (predicted_labels is None):
+                        print(
+                            f"Got no predictions for batch. Saving results so far and halting. Batch was {batch}.",
+                            file=sys.stderr)
+                        input_exhausted = True
+                    else:
+                        for item_id in batch.keys():
+                            with outputpath.open("a") as outfile:
+                                written_bytes = outputpath.stat().st_size
+                                if written_bytes == 0:
+                                    outfile.write("{\n")
+                                    outfile.flush()
+                                elif written_bytes > 2:
+                                    outfile.write(",\n")
+                                outfile.write(f"  {json.dumps(item_id)}: {json.dumps(predicted_labels.pop(0))}")
 
                     batch = {}
                     if input_exhausted:
                         with outputpath.open("a") as outfile:
-                            outfile.write("}")
+                            outfile.write("\n}")
                         looping = False
 
                 try:
-                    line = next(infile)
                     line += 1
                     try:
-                        item = json.loads(infile.read().strip())
+                        item = json.loads(next(infile).strip())
                         batch.update(
                             item)  # theoretically, could be any number of items per line (but one is recommended)
                     except json.JSONDecodeError:
                         print(
-                            f"Error parsing line {line:,} from {inputpath} as JSON. Saving results so far and halting.")
+                            f"Error parsing line {line:,} from {inputpath} as JSON. Saving results so far and halting.",
+                            file=sys.stderr)
                         input_exhausted = True
 
                 except StopIteration:

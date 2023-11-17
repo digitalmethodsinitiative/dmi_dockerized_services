@@ -1,6 +1,7 @@
 #!/usr/bin/python3
 
 import subprocess
+import shutil
 import shlex
 import re
 
@@ -17,3 +18,6 @@ with open("local-models.yml") as infile:
         model_git_url = f"https://huggingface.co/{model}"
         print(f"Downloading {model_git_url}")
         subprocess.run(shlex.split(f"git clone --depth 1 {model_git_url}"))
+
+        # we don't need this and it saves like 50% of the space
+        shutil.rmtree(f"{model}/.git", ignore_errors=True)

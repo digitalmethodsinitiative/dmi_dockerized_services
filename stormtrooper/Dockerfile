@@ -1,11 +1,12 @@
-FROM nvidia/cuda:12.1.1-runtime-ubuntu20.04
+FROM nvidia/cuda:12.1.1-runtime-ubuntu22.04
 
 # Set working directory
 WORKDIR /app/
 
 # Install system dependencies
 RUN apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -yq \
-    python3 \
+    git \
+    python3.9 \
     pip
 
 # Copy interface files and pre-loaded models
