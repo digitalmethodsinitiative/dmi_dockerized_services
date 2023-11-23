@@ -62,7 +62,7 @@ if __name__ == "__main__":
 
     if model_type in ("text2text", "textgen"):
         have_examples = any(labels.values())
-        model_name = args.model.split("/").pop()
+        model_name = args.model.split("/").pop()  # if pre-loaded, the models are stored in folders of this name
         if have_examples:
             # fit() expects a list of examples as the first arg, and a list of
             # corresponding labels as the second arg
