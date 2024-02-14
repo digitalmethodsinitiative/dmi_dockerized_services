@@ -140,13 +140,21 @@ if __name__ == "__main__":
         print(e)
         exit(1)
 
-    output_dir = Path(args.output_dir) if args.output_dir else None
+    output_dir = Path(args.output_dir) if args.output_dir else Path(".")
 
     for image in args.images:
-        prediction = top_labels(model, preprocess, classes, image)
-        if output_dir:
-            with open(output_dir.joinpath(Path(image).with_suffix(".json").name), "w") as out_file:
-                out_file.write(json.dumps(prediction))
+        if Path(image_path).is_file():
+            prediction = top_labels(model, preprocess, classes, image)
+            results = {"filename": Path(image).name,
+                       "predictions": prediction}
+        else:
+            error = f"Invalid image path {image}"
+            print(error)
+            results = {"filename": Path(image).name,
+                       "error": error}
+
+        with open(output_dir.joinpath(Path(image).with_suffix(".json").name), "w") as out_file:
+            out_file.write(json.dumps(results))
 
 
 
