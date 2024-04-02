@@ -1,4 +1,4 @@
-FROM nvidia/cuda:12.1.1-runtime-ubuntu20.04
+FROM nvidia/cuda:12.1.1-runtime-ubuntu22.04
 
 # Set working directory
 WORKDIR /app/
@@ -13,7 +13,7 @@ COPY . /app/
 
 # Install pip dependencies
 RUN pip install -r requirements.txt \
-  --extra-index-url https://download.pytorch.org/whl/cu117
+  --extra-index-url https://download.pytorch.org/whl/cu118
 
 # make default output folder
 RUN mkdir /app/data/
