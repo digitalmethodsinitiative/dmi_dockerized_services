@@ -1,0 +1,4 @@
+transformers
+pillow
+torch
+numpy
