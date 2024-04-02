@@ -13,6 +13,12 @@ RUN apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -yq \
 # Copy interface files and pre-loaded models
 COPY . /app/
 
+# pre-cache model
+RUN git lfs install
+RUN rm -rf stable-diffusion-xl-base-1.0
+RUN git clone https://huggingface.co/stabilityai/stable-diffusion-xl-base-1.0
+RUN git clone https://huggingface.co/stabilityai/stable-diffusion-xl-refiner-1.0
+
 # Install pip dependencies
 RUN pip install -r requirements.txt \
   --extra-index-url https://download.pytorch.org/whl/cu117
