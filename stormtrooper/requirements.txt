@@ -1,4 +1,4 @@
 git+https://github.com/centre-for-humanities-computing/stormtrooper
-torch
 pyyaml
+torch
 python-Levenshtein
