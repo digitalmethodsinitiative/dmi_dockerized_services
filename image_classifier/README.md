@@ -23,7 +23,7 @@ Run container as daemon from image
 
 `docker run -v $(pwd)/data/:/app/data/ --name image_classifier --gpus all -d image_classifier`
 -  `-v $(pwd)/data/:/app/data/` mounts the `data` directory in your current working directory to the container
-- `--name image_classifier` names the container "stable_diffusion"
+- `--name image_classifier` names the container "image_classifier"
 - `--gpus all` is needed for the container to use the host GPUs; remove and it will run without GPUs albeit MUCH more 
   slowly (unusably, basically)
 - `-d` runs the container and disconnects

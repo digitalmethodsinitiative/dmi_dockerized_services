@@ -48,7 +48,7 @@ def parse_args():
     cli.add_argument("--output-dir", "-o", help="Output directory where annotations will be saved", default="data",
                      required=True)
     cli.add_argument("--dataset-name", "-d", help="Dataset name (to use for output file)", required=True)
-    cli.add_argument("--label-threshold", "-t", help="Threshold for confidence in labels to be included in output (default 0.5, or 50%)", default=0.5, type=float)
+    cli.add_argument("--label-threshold", "-t", help="Threshold for confidence in labels to be included in output (default 0.5, or 50%%)", default=0.5, type=float)
     return cli.parse_args()
 
 
