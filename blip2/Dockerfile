@@ -10,12 +10,14 @@ RUN apt-get update && apt install -y \
 
 # Set working directory
 WORKDIR /app/
+COPY requirements.txt /app/
+# Install python packages
+RUN python3 -m pip install -U -r requirements.txt
+
+# Copy project
 COPY . /app/
 RUN mkdir /app/data/
 RUN chmod +x docker-entrypoint.sh download_models.py
-
-# Install python packages
-RUN python3 -m pip install -U -r requirements.txt
 
 # Download CLIP models
 RUN python3 download_models.py
