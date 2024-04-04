@@ -17,6 +17,7 @@ def parse_args():
     cli = argparse.ArgumentParser()
     cli.add_argument("--image-folder", "-i", help="Path to folder containing images", required=True)
     cli.add_argument("--model", "-m", help=f"Model for (options: {', '.join(model_types)})", default="Salesforce/blip2-opt-2.7b")
+    cli.add_argument("--max_new_tokens", "-t", help=f"Maximum number of tokens to be generated for model caption/response.", type=int, default=20)
     cli.add_argument("--prompt", "-p", help="Output directory where annotations will be saved", default=None)
     cli.add_argument("--output-dir", "-o", help="Output directory where annotations will be saved", default="data", required=True)
     cli.add_argument("--dataset-name", "-d", help="Dataset name (to use for output file)", required=True)
@@ -57,9 +58,9 @@ if __name__ == "__main__":
             # Process image
             inputs = processor(image_obj, return_tensors="pt", **prompt).to(device, torch.float16)
             # Generate text
-            # TODO: check max_new_tokens usage
-            # TODO: check skip_special_tokens usage
-            generated_ids = model.generate(**inputs, max_new_tokens=20)
+            # max_new_tokens is in BLIP examples; there is also min_length and max_length, but they seem to behave oddly with the prompt parameter
+            generated_ids = model.generate(**inputs, max_new_tokens=args.max_new_tokens)
+            # skip_special_tokens is in BLIP examples; unsure what tokens they have marked as special to be removed
             generated_text = processor.batch_decode(generated_ids, skip_special_tokens=True)[0].strip()
             metadata["text"] = generated_text
 
