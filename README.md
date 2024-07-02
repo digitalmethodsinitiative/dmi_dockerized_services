@@ -10,10 +10,11 @@ for more information.
 
 ## Services
 
-| Service Name | Source                            | Notes |
-|--------------|-----------------------------------|-------|
-| Whisper | https://github.com/openai/whisper ||
-| CLIP | https://github.com/openai/CLIP/ ||
+| Service Name | Folder | Source                            | Notes |
+|--------------|---------|-----------------------------------|-------|
+| Whisper | openai_whipser | https://github.com/openai/whisper ||
+| CLIP | openai_clip | https://github.com/openai/CLIP/ ||
+| BLIP2 | blip2 | https://huggingface.co/Salesforce/blip2-opt-2.7b ||
 
 # Basic Docker setup
 ### Build the image
