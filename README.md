@@ -1,5 +1,12 @@
 # DMI Dockerized Services
-These are a collection of Dockerized services allowing us to deploy them as single use or readily accessible.
+This repo contains a collection of Dockerized services allowing them to be run via a command line inside a controlled environment. 
+Each container should contain a `Dockerfile` to build the proper environment and, possibly, a `docker-entrypoint.sh` file running a 
+default commnads. It also may contain a command line interface file allowing different arguments to be passed to the service.
+
+These Services were designed primarily to work with our [DMI Service Manager](https://github.com/digitalmethodsinitiative/dmi_service_manager/blob/main/readme.md) 
+which allows these services to be run via an API and can be integrated with our tools such as [4CAT](https://4cat.nl). The 
+services can also be run independently on local files and some contain their own APIs. Explore their individual README.md files
+for more information.
 
 ## Services
 
