@@ -27,6 +27,7 @@ for more information.
   - `git clone https://github.com/digitalmethodsinitiative/dmi_dockerized_services.git`
 2. Navigate to the desired image
   - e.g., `cd dmi_dockerized_services/openai_whipser` for our Whisper image
+  - Individual services may have `README.md` files similar to this which additional information on running the service and types of commands that you can send
 3. Build the image
   - `docker build -t image_name .`
   - `image_name` can be whatever you wish, but you will need it to run the image and set up the DMI Service Manager (e.g., `docker build -t whisper .` for Whisper)
