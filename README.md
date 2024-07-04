@@ -16,6 +16,7 @@ for more information.
 | CLIP | openai_clip | https://github.com/openai/CLIP/ ||
 | BLIP2 | blip2 | https://huggingface.co/Salesforce/blip2-opt-2.7b ||
 | Stable Diffusion | stable_diffusion | https://huggingface.co/stabilityai/stable-diffusion-xl-base-1.0 ||
+| PixPlot | [DMI PixPlot repo](https://github.com/digitalmethodsinitiative/dmi_pix_plot) | https://dhlab.yale.edu/projects/pixplot/ | The DMI PixPlot was developed prior to the DMI Service Manager as a stand alone service, but it now also works with the DMI SM. You can find instructions [here on installation and setup](https://github.com/digitalmethodsinitiative/dmi_pix_plot/blob/master/Docker_README.md). |
 
 # Installation
 1. Install Docker itself
