@@ -10,6 +10,10 @@ RUN apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -yq \
     libgl1 \
     libglib2.0-0
 
+
+# Python to run unbuffered and print directly (to Docker logs)
+ENV PYTHONUNBUFFERED=1
+
 # Copy interface files and pre-loaded models
 COPY . /app/
 

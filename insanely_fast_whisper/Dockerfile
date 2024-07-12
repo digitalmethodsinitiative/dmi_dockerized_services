@@ -11,6 +11,9 @@ RUN apt-get update && apt-get upgrade -y && DEBIAN_FRONTEND=noninteractive apt-g
     ffmpeg \
     git
 
+# Python to run unbuffered and print directly (to Docker logs)
+ENV PYTHONUNBUFFERED=1
+
 # Install Whisper package
 RUN python3 -m pip install -U whisperplus flash-attn transformers optimum accelerate
 
