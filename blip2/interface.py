@@ -1,6 +1,8 @@
 import argparse
+import requests
 import json
 import PIL
+from urllib.parse import quote_plus
 from pathlib import Path
 from transformers import AutoProcessor, Blip2ForConditionalGeneration
 import torch
@@ -21,17 +23,31 @@ def parse_args():
     cli.add_argument("--prompt", "-p", help="Output directory where annotations will be saved", default=None)
     cli.add_argument("--output-dir", "-o", help="Output directory where annotations will be saved", default="data", required=True)
     cli.add_argument("--dataset-name", "-d", help="Dataset name (to use for output file)", required=True)
+    # These arguments are added by the DMI Service Manager in order for the service to, if desired, provide status updates which will be logged in the DMI Service Manager database.
+    cli.add_argument("--database_key", "-k", default="",
+                     help="DMI Service Manager database key to provide status updates.")
+    cli.add_argument("--dmi_sm_server", "-s", default="",
+                     help="DMI Service Manager server address to provide status updates.")
     return cli.parse_args()
+
+def log(message, server=None, db_key=None):
+    print(message)
+    if server and db_key:
+        try:
+            requests.post(f"{server}/status_update/?key={db_key}&status=running&message={quote_plus(message)}")
+        except requests.exceptions.RequestException as e:
+            print(f"Failed to log status update: {e}")
 
 if __name__ == "__main__":
     args = parse_args()
 
     output_folder = Path(args.output_dir)
     if not output_folder.exists():
-        print(f"Output folder {args.output_dir} not found.")
+        log(f"Output folder {args.output_dir} not found.", args.dmi_sm_server, args.database_key)
         exit(1)
 
     # Setup models
+    log("Setting up model...", args.dmi_sm_server, args.database_key)
     processor = AutoProcessor.from_pretrained(args.model)
     # TODO: check torch_dtype usage
     model = Blip2ForConditionalGeneration.from_pretrained(args.model, torch_dtype=torch.float16)
@@ -41,6 +57,7 @@ if __name__ == "__main__":
     prompt = {"text": args.prompt} if args.prompt else {}
 
     done = 0
+    log("Processing images...", args.dmi_sm_server, args.database_key)
     with output_folder.joinpath(args.dataset_name + ".ndjson").open("w") as outfile:
         images = Path(args.image_folder)
         for image in images.glob("*"):
@@ -66,5 +83,4 @@ if __name__ == "__main__":
 
             done += 1
             outfile.write(json.dumps({image.name: metadata}) + "\n")
-            print(f"Processed {done} images", end="\r")
-    print(f"Finished w/ {done} images")
+            log(f"Processed {done} images", args.dmi_sm_server, args.database_key)

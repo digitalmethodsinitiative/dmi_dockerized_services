@@ -13,6 +13,8 @@ WORKDIR /app/
 COPY requirements.txt /app/
 # Install python packages
 RUN python3 -m pip install -U -r requirements.txt
+# Python to run unbuffered and print directly (to Docker logs)
+ENV PYTHONUNBUFFERED=1
 
 # Copy project
 COPY . /app/
