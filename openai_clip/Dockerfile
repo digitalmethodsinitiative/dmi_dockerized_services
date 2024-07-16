@@ -13,7 +13,7 @@ RUN apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -yq \
 ENV PYTHONUNBUFFERED=1
 
 # Install Whisper package
-RUN python3 -m pip install -U ftfy regex tqdm && \
+RUN python3 -m pip install -U ftfy regex tqdm requests && \
     python3 -m pip install -U git+https://github.com/openai/CLIP.git
 
 # Copy project
