@@ -30,11 +30,11 @@ def parse_args():
                      help="DMI Service Manager server address to provide status updates.")
     return cli.parse_args()
 
-def log(message, server=None, db_key=None):
+def log(message, server=None, db_key=None, num_records=None):
     print(message)
     if server and db_key:
         try:
-            requests.post(f"{server}/status_update/?key={db_key}&status=running&message={quote_plus(message)}")
+            requests.post(f"{server}/status_update/?key={db_key}&status=running&message={quote_plus(message)}{'&num_records=' + str(num_records) if num_records else ''}")
         except requests.exceptions.RequestException as e:
             print(f"Failed to log status update: {e}")
 
@@ -83,4 +83,4 @@ if __name__ == "__main__":
 
             done += 1
             outfile.write(json.dumps({image.name: metadata}) + "\n")
-            log(f"Processed {done} images", args.dmi_sm_server, args.database_key)
+            log(f"Processed {done} images", args.dmi_sm_server, args.database_key, num_records=done)
