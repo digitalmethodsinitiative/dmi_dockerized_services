@@ -2,6 +2,7 @@ import argparse
 import importlib
 import os
 import torch
+import requests
 import torchvision
 import clip
 from PIL import Image

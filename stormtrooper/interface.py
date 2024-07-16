@@ -1,5 +1,6 @@
 import itertools
 import argparse
+import requests
 import torch
 import yaml
 import json

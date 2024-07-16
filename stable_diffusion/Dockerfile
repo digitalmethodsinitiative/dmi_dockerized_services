@@ -8,7 +8,8 @@ RUN apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -yq \
     python3 \
     pip \
     libgl1 \
-    libglib2.0-0
+    libglib2.0-0 \
+    git-lfs
 
 
 # Python to run unbuffered and print directly (to Docker logs)

@@ -1,4 +1,5 @@
 import argparse
+import requests
 import json
 import torch
 import sys
