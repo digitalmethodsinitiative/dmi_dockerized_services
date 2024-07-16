@@ -4,6 +4,8 @@ import torch
 import yaml
 import json
 import sys
+from urllib.parse import quote_plus
+import requests
 
 from pathlib import Path
 from stormtrooper import Text2TextZeroShotClassifier, Text2TextFewShotClassifier, GenerativeZeroShotClassifier, \
@@ -11,6 +13,14 @@ from stormtrooper import Text2TextZeroShotClassifier, Text2TextFewShotClassifier
 
 have_cuda = torch.cuda.is_available()
 gpu_or_cpu = "cuda:0" if have_cuda else "cpu"
+
+def log(message, server=None, db_key=None, num_records=None):
+    print(message)
+    if server and db_key:
+        try:
+            requests.post(f"{server}/status_update/?key={db_key}&status=running&message={quote_plus(message)}{'&num_records=' + str(num_records) if num_records else ''}")
+        except requests.exceptions.RequestException as e:
+            print(f"Failed to log status update: {e}")
 
 if __name__ == "__main__":
     cli = argparse.ArgumentParser()
@@ -25,6 +35,11 @@ if __name__ == "__main__":
                      required=True)
     cli.add_argument("--output-dir", "-o", help="Output directory where image will be saved", default="data",
                      required=True)
+    # These arguments are added by the DMI Service Manager in order for the service to, if desired, provide status updates which will be logged in the DMI Service Manager database.
+    cli.add_argument("--database_key", "-k", default="",
+                     help="DMI Service Manager database key to provide status updates.")
+    cli.add_argument("--dmi_sm_server", "-s", default="",
+                     help="DMI Service Manager server address to provide status updates.")
 
     args = cli.parse_args()
 
@@ -133,6 +148,8 @@ if __name__ == "__main__":
 
                 except StopIteration:
                     input_exhausted = True
+
+                log(f"Processed {line:,} items", args.dmi_sm_server, args.database_key, num_records=line)
 
     else:
         print(f"OpenAI models are currently not supported.", file=sys.stderr)

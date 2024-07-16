@@ -3,6 +3,8 @@ import json
 import torch
 import sys
 import re
+from urllib.parse import quote_plus
+import requests
 
 from diffusers import DiffusionPipeline
 from pathlib import Path
@@ -20,9 +22,21 @@ def parse_args():
     cli.add_argument("--negative-prompt", "-n", help="Negative prompt", default="")
     cli.add_argument("--steps", "-s", help="Number of steps (default 40)", default=40, type=int)
     cli.add_argument("--output-dir", "-o", help="Output directory where image will be saved", default="data", required=True)
+    # These arguments are added by the DMI Service Manager in order for the service to, if desired, provide status updates which will be logged in the DMI Service Manager database.
+    cli.add_argument("--database_key", "-k", default="",
+                     help="DMI Service Manager database key to provide status updates.")
+    cli.add_argument("--dmi_sm_server", "-s", default="",
+                     help="DMI Service Manager server address to provide status updates.")
 
     return cli.parse_args()
 
+def log(message, server=None, db_key=None, num_records=None):
+    print(message)
+    if server and db_key:
+        try:
+            requests.post(f"{server}/status_update/?key={db_key}&status=running&message={quote_plus(message)}{'&num_records=' + str(num_records) if num_records else ''}")
+        except requests.exceptions.RequestException as e:
+            print(f"Failed to log status update: {e}")
 
 def make_filename(prompt_id, prompt):
     """
@@ -78,6 +92,7 @@ if __name__ == "__main__":
     else:
         prompts = {1: {"prompt": args.prompt, "negative": args.negative_prompt}}
 
+    done = 0
     for prompt_id, prompt in prompts.items():
         if not prompt["prompt"]:
             continue
@@ -103,3 +118,7 @@ if __name__ == "__main__":
 
         filename = make_filename(prompt_id, prompt["prompt"])
         image.save(Path(args.output_dir).joinpath(filename))
+        done += 1
+
+        log(f"Generated {done} image(s)", args.dmi_sm_server, args.database_key, num_records=done)
+        

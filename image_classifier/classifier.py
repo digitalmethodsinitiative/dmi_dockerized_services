@@ -3,6 +3,8 @@ import numpy as np
 import json
 import torch
 import PIL
+from urllib.parse import quote_plus
+import requests
 
 from transformers import AutoImageProcessor, AutoModelForImageClassification
 from pathlib import Path
@@ -49,8 +51,20 @@ def parse_args():
                      required=True)
     cli.add_argument("--dataset-name", "-d", help="Dataset name (to use for output file)", required=True)
     cli.add_argument("--label-threshold", "-t", help="Threshold for confidence in labels to be included in output (default 0.5, or 50%%)", default=0.5, type=float)
+    # These arguments are added by the DMI Service Manager in order for the service to, if desired, provide status updates which will be logged in the DMI Service Manager database.
+    cli.add_argument("--database_key", "-k", default="",
+                     help="DMI Service Manager database key to provide status updates.")
+    cli.add_argument("--dmi_sm_server", "-s", default="",
+                     help="DMI Service Manager server address to provide status updates.")
     return cli.parse_args()
 
+def log(message, server=None, db_key=None, num_records=None):
+    print(message)
+    if server and db_key:
+        try:
+            requests.post(f"{server}/status_update/?key={db_key}&status=running&message={quote_plus(message)}{'&num_records=' + str(num_records) if num_records else ''}")
+        except requests.exceptions.RequestException as e:
+            print(f"Failed to log status update: {e}")
 
 if __name__ == "__main__":
     args = parse_args()
@@ -102,3 +116,5 @@ if __name__ == "__main__":
             done += 1
 
             outfile.write(json.dumps({image.name: metadata}) + "\n")
+            log(f"Processed {done} images", args.dmi_sm_server, args.database_key, num_records=done)
+            

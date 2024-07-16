@@ -7,6 +7,8 @@ import clip
 from PIL import Image
 from pathlib import Path
 import json
+from urllib.parse import quote_plus
+import requests
 
 device = "cuda" if torch.cuda.is_available() else "cpu"
 
@@ -22,8 +24,21 @@ def parse_args():
     cli.add_argument("--output_dir", "-o", default="", help="Directory to store JSON results.")
     cli.add_argument("--categories", "-c", default="", help="Categories to classify image (comma seperated list).")
     cli.add_argument("--images", "-i", nargs="+", type=str, help="Image(s) to classify.")
+    # These arguments are added by the DMI Service Manager in order for the service to, if desired, provide status updates which will be logged in the DMI Service Manager database.
+    cli.add_argument("--database_key", "-k", default="",
+                     help="DMI Service Manager database key to provide status updates.")
+    cli.add_argument("--dmi_sm_server", "-s", default="",
+                     help="DMI Service Manager server address to provide status updates.")
 
     return cli.parse_args()
+
+def log(message, server=None, db_key=None, num_records=None):
+    print(message)
+    if server and db_key:
+        try:
+            requests.post(f"{server}/status_update/?key={db_key}&status=running&message={quote_plus(message)}{'&num_records=' + str(num_records) if num_records else ''}")
+        except requests.exceptions.RequestException as e:
+            print(f"Failed to log status update: {e}")
 
 
 def collect_image_categories(dataset_name):
@@ -142,7 +157,7 @@ if __name__ == "__main__":
 
     output_dir = Path(args.output_dir) if args.output_dir else Path(".")
 
-    for image in args.images:
+    for i, image in enumerate(args.images):
         if Path(image_path).is_file():
             prediction = top_labels(model, preprocess, classes, image)
             results = {"filename": Path(image).name,
@@ -156,5 +171,4 @@ if __name__ == "__main__":
         with open(output_dir.joinpath(Path(image).with_suffix(".json").name), "w") as out_file:
             out_file.write(json.dumps(results))
 
-
-
+        log(f"Processed {i + 1} images", args.dmi_sm_server, args.database_key, num_records=i + 1)
