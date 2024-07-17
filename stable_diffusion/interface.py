@@ -26,7 +26,7 @@ def parse_args():
     # These arguments are added by the DMI Service Manager in order for the service to, if desired, provide status updates which will be logged in the DMI Service Manager database.
     cli.add_argument("--database_key", "-k", default="",
                      help="DMI Service Manager database key to provide status updates.")
-    cli.add_argument("--dmi_sm_server", "-s", default="",
+    cli.add_argument("--dmi_sm_server", "-m", default="",
                      help="DMI Service Manager server address to provide status updates.")
 
     return cli.parse_args()
