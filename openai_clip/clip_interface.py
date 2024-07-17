@@ -158,18 +158,19 @@ if __name__ == "__main__":
 
     output_dir = Path(args.output_dir) if args.output_dir else Path(".")
 
-    for i, image in enumerate(args.images):
-        if Path(image_path).is_file():
-            prediction = top_labels(model, preprocess, classes, image)
-            results = {"filename": Path(image).name,
+    for i, image_path in enumerate(args.images):
+        image = Path(image_path)
+        if image.is_file():
+            prediction = top_labels(model, preprocess, classes, image_path)
+            results = {"filename": image.name,
                        "predictions": prediction}
         else:
             error = f"Invalid image path {image}"
             print(error)
-            results = {"filename": Path(image).name,
+            results = {"filename": image.name,
                        "error": error}
 
-        with open(output_dir.joinpath(Path(image).with_suffix(".json").name), "w") as out_file:
+        with open(output_dir.joinpath(image.with_suffix(".json").name), "w") as out_file:
             out_file.write(json.dumps(results))
 
         log(f"Processed {i + 1} images", args.dmi_sm_server, args.database_key, num_records=i + 1)
