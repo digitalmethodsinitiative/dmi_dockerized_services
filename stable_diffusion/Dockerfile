@@ -25,7 +25,7 @@ RUN git clone https://huggingface.co/stabilityai/stable-diffusion-xl-base-1.0
 RUN git clone https://huggingface.co/stabilityai/stable-diffusion-xl-refiner-1.0
 
 # Install pip dependencies
-RUN pip install -r requirements.txt \
+RUN python3 -m pip install -r requirements.txt \
   --extra-index-url https://download.pytorch.org/whl/cu117
 
 # make default output folder

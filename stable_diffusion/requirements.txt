@@ -3,3 +3,4 @@ invisible_watermark
 transformers
 accelerate
 safetensors
+networkx==3.1
