@@ -94,6 +94,28 @@ def predict_image_category_probabilities(model, preprocess, image_path, text_lis
     return probs
 
 
+def get_similarity(query, image_path):
+    """
+    This calculates the similarity of a text query to an image.
+
+    It uses the CLIP model to encode the text and image, then calculates the dot product of the two embeddings. This can
+    be used to show how similar the text query is to the image (in terms of the CLIP model's understanding of the text/image).
+
+    TODO: How do we come up with a threshold to determine if the text is similar to the image?
+    :param query:
+    :param image_path:
+    :return:
+    """
+    image = preprocess(Image.open(image_path)).unsqueeze(0).to(device)
+    query_tokens = clip.tokenize([query]).to(device)
+    with torch.no_grad():
+        query_embeddings = model.encode_text(query_tokens)
+        image_features = model.encode_image(image)
+
+    # TODO: we need some way to determine if the similarity is high enough to be considered a match; playing around 30 seems significant, but I need to understand the range of values or how to normalize them
+    return query_embeddings @ image_features.T
+
+
 def top_labels(model, preprocess, classes, image_path):
     image_input = preprocess(Image.open(image_path)).unsqueeze(0).to(device)
     text_inputs = torch.cat([clip.tokenize(f"a photo of a {c}") for c in classes]).to(device)
