@@ -53,9 +53,7 @@ def make_filename(prompt_id, prompt):
     return f"{prompt_id}-{safe_prompt}.jpeg"
 
 
-if __name__ == "__main__":
-    args = parse_args()
-
+def use_sdxl1(args, prompts):
     # load both base & refiner
     base = DiffusionPipeline.from_pretrained(
         "stable-diffusion-xl-base-1.0",
