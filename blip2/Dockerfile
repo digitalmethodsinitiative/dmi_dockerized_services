@@ -1,12 +1,20 @@
 FROM nvidia/cuda:12.1.1-devel-ubuntu20.04
+ARG DEBIAN_FRONTEND=noninteractive
 
 RUN apt-get update && apt install -y \
     # General requirements:
     libpq-dev \
-    python3-dev \
+    python3.9 \
+    python3.9-dev \
+    python3.9-distutils \
     python3-pip \
     git \
     wget
+# Set Python 3.9 as the default python3
+RUN update-alternatives --install /usr/bin/python3 python3 /usr/bin/python3.9 1
+
+# Upgrade pip for Python 3.9
+RUN python3 -m pip install --upgrade pip
 
 # Set working directory
 WORKDIR /app/
