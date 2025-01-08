@@ -50,7 +50,7 @@ def collect_image_categories(dataset_name):
     try:
         dataset = torch_dataset(root=os.path.expanduser("~/.cache"), download=True)
     except TypeError as e:
-        print(e)
+        log(e)
         raise ValueError(f"Unable to load dataset type: {dataset_name}")
 
     return dataset.classes
@@ -87,14 +87,14 @@ def predict_image_category_probabilities(model, preprocess, image_path, text_lis
         probs = logits_per_image.softmax(dim=-1).cpu().numpy()
     probs = sorted([(i, j) for i, j in zip(text_list, probs[0])], key=lambda x: x[1], reverse=True)
 
-    print("Label probs:")
+    log("Label probs:")
     for prob in probs[:5]:
-        print(f"{prob[0]}: {100 * prob[1]:.2f}%")
+        log(f"{prob[0]}: {100 * prob[1]:.2f}%")
 
     return probs
 
 
-def get_similarity(query, image_path):
+def get_similarity(query, image_path, model_name="ViT-B/16"):
     """
     This calculates the similarity of a text query to an image.
 
@@ -106,12 +106,12 @@ def get_similarity(query, image_path):
     :param image_path:
     :return:
     """
+    model, preprocess = load_model(model_name)
     image = preprocess(Image.open(image_path)).unsqueeze(0).to(device)
     query_tokens = clip.tokenize([query]).to(device)
     with torch.no_grad():
         query_embeddings = model.encode_text(query_tokens)
         image_features = model.encode_image(image)
-
     # TODO: we need some way to determine if the similarity is high enough to be considered a match; playing around 30 seems significant, but I need to understand the range of values or how to normalize them
     return query_embeddings @ image_features.T
 
@@ -146,36 +146,36 @@ def top_labels(model, preprocess, classes, image_path):
 if __name__ == "__main__":
     args = parse_args()
     if args.available_models:
-        print(get_available_models())
+        log(get_available_models())
         exit(0)
 
     if args.dataset:
         try:
             classes = collect_image_categories(args.dataset)
         except ValueError as e:
-            print(e)
+            log(e)
             exit(1)
         if args.categories:
-            print("Cannot specify both --dataset and --categories.")
+            log("Cannot specify both --dataset and --categories.")
             exit(1)
     elif args.categories:
         classes = args.categories.split(",")
     else:
-        print("Must specify either --dataset or --categories.")
+        log("Must specify either --dataset or --categories.")
         exit(1)
 
     if not args.model:
-        print("Must specify --model.")
+        log("Must specify --model.")
         exit(1)
 
     if not args.images:
-        print("Must specify at least one image.")
+        log("Must specify at least one image.")
         exit(1)
 
     try:
         model, preprocess = load_model(args.model)
     except ValueError as e:
-        print(e)
+        log(e)
         exit(1)
 
     output_dir = Path(args.output_dir) if args.output_dir else Path(".")
@@ -183,12 +183,23 @@ if __name__ == "__main__":
     for i, image_path in enumerate(args.images):
         image = Path(image_path)
         if image.is_file():
+            try:
+                # Check if the image is valid and can be opened
+                Image.open(image)
+            except UnidentifiedImageError as e:
+                error = f"Unable to open image {image.name}: {e}"
+                log(error)
+                results = {"filename": image.name,
+                           "error": error}
+                with open(output_dir.joinpath(image.with_suffix(".json").name), "w") as out_file:
+                    out_file.write(json.dumps(results))
+                continue
             prediction = top_labels(model, preprocess, classes, image_path)
             results = {"filename": image.name,
                        "predictions": prediction}
         else:
             error = f"Invalid image path {image}"
-            print(error)
+            log(error)
             results = {"filename": image.name,
                        "error": error}
 
