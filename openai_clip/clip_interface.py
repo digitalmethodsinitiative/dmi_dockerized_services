@@ -5,7 +5,7 @@ import torch
 import requests
 import torchvision
 import clip
-from PIL import Image
+from PIL import Image, UnidentifiedImageError
 from pathlib import Path
 import json
 from urllib.parse import quote_plus
